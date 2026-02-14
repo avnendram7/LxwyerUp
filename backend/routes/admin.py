@@ -94,6 +94,7 @@ async def approve_lawyer_application(app_id: str, admin: dict = Depends(get_admi
             'languages': application.get('languages', []),
             'fee_range': application.get('fee_range', '₹5,000 - ₹15,000'),
             'bio': application.get('bio', 'Experienced lawyer'),
+            'office_address': application.get('office_address'),
             'rating': 4.5,
             'is_verified': True
         }

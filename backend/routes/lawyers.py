@@ -21,6 +21,9 @@ async def get_lawyers():
         if isinstance(lawyer.get('created_at'), str):
             dt_str = lawyer['created_at'].replace('Z', '+00:00') if lawyer['created_at'].endswith('Z') else lawyer['created_at']
             lawyer['created_at'] = datetime.fromisoformat(dt_str)
+        # Ensure ID is string
+        lawyer['id'] = str(lawyer['_id'])
+        del lawyer['_id']
     
     return lawyers
 
@@ -56,6 +59,7 @@ async def submit_lawyer_application(application: LawyerApplicationCreate):
         fee_range=application.fee_range,
         bio=application.bio,
         lawyer_type=application.lawyer_type,
+        office_address=application.office_address,
         law_firm_id=application.law_firm_id,
         law_firm_name=application.law_firm_name
     )

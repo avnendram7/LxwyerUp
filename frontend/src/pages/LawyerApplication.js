@@ -54,7 +54,7 @@ const SimpleNavbar = ({ navigate }) => {
             <Scale className="w-6 h-6 text-[#0F2944]" />
             <span className="text-xl font-bold text-[#0F2944]">Lxwyer Up</span>
           </button>
-          
+
           <button
             onClick={() => navigate('/role-selection')}
             className="flex items-center gap-2 text-gray-600 hover:text-[#0F2944] transition-colors"
@@ -74,7 +74,7 @@ export default function LawyerApplication() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [lawFirms, setLawFirms] = useState([]);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -96,7 +96,8 @@ export default function LawyerApplication() {
     languages: [],
     feeMin: '',
     feeMax: '',
-    bio: ''
+    bio: '',
+    officeAddress: ''
   });
 
   useEffect(() => {
@@ -200,9 +201,10 @@ export default function LawyerApplication() {
         education: formData.education,
         languages: formData.languages,
         fee_range: `₹${formData.feeMin} - ₹${formData.feeMax}`,
-        bio: formData.bio
+        bio: formData.bio,
+        office_address: formData.officeAddress
       });
-      
+
       setSubmitted(true);
       toast.success('Application submitted successfully!');
     } catch (error) {
@@ -234,7 +236,7 @@ export default function LawyerApplication() {
             <p className="text-gray-600 mb-4">
               Thank you for applying to join Lxwyer Up. Our team will review your application and get back to you within 24-48 hours.
             </p>
-            
+
             <div className="bg-blue-50 rounded-xl p-4 mb-6 text-left">
               <p className="text-sm text-[#0F2944]">
                 <strong>Application Type:</strong> {formData.lawyerType === 'independent' ? 'Independent Lawyer' : 'Law Firm Associate'}
@@ -248,7 +250,7 @@ export default function LawyerApplication() {
                 Once approved, you can login with <strong>{formData.email}</strong> to access your {formData.lawyerType === 'independent' ? 'personal lawyer' : 'law firm'} dashboard.
               </p>
             </div>
-            
+
             <Button
               onClick={() => navigate('/')}
               className="bg-[#0F2944] hover:bg-[#0F2944]/90 text-white rounded-xl px-8"
@@ -270,17 +272,15 @@ export default function LawyerApplication() {
         <div className="flex items-center justify-center mb-8">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
-                s === step ? 'bg-[#0F2944] text-white' :
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${s === step ? 'bg-[#0F2944] text-white' :
                 s < step ? 'bg-green-600 text-white' :
-                'bg-gray-200 text-gray-500'
-              }`}>
+                  'bg-gray-200 text-gray-500'
+                }`}>
                 {s < step ? '✓' : s}
               </div>
               {s < 4 && (
-                <div className={`w-16 h-1 mx-2 rounded ${
-                  s < step ? 'bg-green-600' : 'bg-gray-200'
-                }`} />
+                <div className={`w-16 h-1 mx-2 rounded ${s < step ? 'bg-green-600' : 'bg-gray-200'
+                  }`} />
               )}
             </div>
           ))}
@@ -382,11 +382,10 @@ export default function LawyerApplication() {
                         updateField('lawFirmId', '');
                         updateField('lawFirmName', '');
                       }}
-                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                        formData.lawyerType === 'independent'
-                          ? 'border-[#0F2944] bg-[#0F2944]/5'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData.lawyerType === 'independent'
+                        ? 'border-[#0F2944] bg-[#0F2944]/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}
                     >
                       <User className={`w-8 h-8 ${formData.lawyerType === 'independent' ? 'text-[#0F2944]' : 'text-gray-400'}`} />
                       <span className={`font-medium ${formData.lawyerType === 'independent' ? 'text-[#0F2944]' : 'text-gray-600'}`}>
@@ -394,15 +393,14 @@ export default function LawyerApplication() {
                       </span>
                       <span className="text-xs text-gray-500 text-center">Personal practice</span>
                     </button>
-                    
+
                     <button
                       type="button"
                       onClick={() => updateField('lawyerType', 'law_firm')}
-                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                        formData.lawyerType === 'law_firm'
-                          ? 'border-[#0F2944] bg-[#0F2944]/5'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData.lawyerType === 'law_firm'
+                        ? 'border-[#0F2944] bg-[#0F2944]/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}
                     >
                       <Building2 className={`w-8 h-8 ${formData.lawyerType === 'law_firm' ? 'text-[#0F2944]' : 'text-gray-400'}`} />
                       <span className={`font-medium ${formData.lawyerType === 'law_firm' ? 'text-[#0F2944]' : 'text-gray-600'}`}>
@@ -583,6 +581,17 @@ export default function LawyerApplication() {
                     ))}
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#0F2944] mb-2">Office Address *</label>
+                  <textarea
+                    value={formData.officeAddress}
+                    onChange={(e) => updateField('officeAddress', e.target.value)}
+                    placeholder="e.g. Chamber 405, Delhi High Court, Sher Shah Road, New Delhi..."
+                    rows={2}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-black placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-[#0F2944]/20 focus:border-[#0F2944]"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -617,11 +626,10 @@ export default function LawyerApplication() {
                         key={lang}
                         type="button"
                         onClick={() => toggleLanguage(lang)}
-                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                          formData.languages.includes(lang)
-                            ? 'bg-[#0F2944] text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${formData.languages.includes(lang)
+                          ? 'bg-[#0F2944] text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
                       >
                         {lang}
                       </button>

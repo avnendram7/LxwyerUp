@@ -10,6 +10,7 @@ class BookingCreate(BaseModel):
     description: str
     price: float = 0.0
     duration_minutes: int = 30 # Default to 30 mins
+    consultation_type: str = "video" # video, audio, in_person
 
 
 
@@ -26,6 +27,8 @@ class Booking(BaseModel):
     meet_link: str = ""
     duration_minutes: int = 30
     is_free_trial: bool = False
+    consultation_type: str = "video"
+    location: str = ""
 
     status: str = 'pending'
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

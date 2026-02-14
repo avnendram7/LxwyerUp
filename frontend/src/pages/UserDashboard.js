@@ -482,11 +482,25 @@ export default function UserDashboard() {
                         <h4 className="font-bold text-gray-900">{booking.lawyer_name || 'Lawyer'}</h4>
                         <p className="text-sm text-gray-500">{new Date(booking.date).toLocaleDateString()} at {booking.time}</p>
                       </div>
-                      {booking.meet_link && (
-                        <a href={booking.meet_link} target="_blank" rel="noopener noreferrer">
-                          <Button className="bg-blue-600 hover:bg-blue-700 text-white">Join Meet</Button>
-                        </a>
-                      )}
+                      <div className="text-right">
+                        {booking.meet_link && booking.consultation_type === 'video' && (
+                          <a href={booking.meet_link} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">Join Meet</Button>
+                          </a>
+                        )}
+                        {booking.consultation_type === 'audio' && (
+                          <div className="flex items-center text-green-700 bg-green-50 px-3 py-1 rounded-lg">
+                            <Phone className="w-4 h-4 mr-2" />
+                            <span className="font-mono font-bold">{booking.location}</span>
+                          </div>
+                        )}
+                        {booking.consultation_type === 'in_person' && (
+                          <div className="flex items-center text-purple-700 bg-purple-50 px-3 py-1 rounded-lg max-w-xs text-right">
+                            <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                            <span className="text-sm truncate">{booking.location}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))
                 ) : (

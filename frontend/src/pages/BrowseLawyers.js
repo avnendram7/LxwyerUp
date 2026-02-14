@@ -1,9 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Scale, Search, Filter, Briefcase, MapPin, ArrowRight, X, ChevronDown, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { dummyLawyers, specializationsList, statesList } from '../data/lawyersData';
+import axios from 'axios';
+
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const SimpleNavbar = ({ navigate }) => {
   return (
@@ -49,6 +52,43 @@ const BrowseLawyers = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const [lawyers, setLawyers] = useState(dummyLawyers.map(l => ({ ...l, is_verified: l.verified })));
+  const [loading, setLoading] = useState(true);
+
+  // Fetch lawyers
+  useEffect(() => {
+    const fetchLawyers = async () => {
+      try {
+        const res = await axios.get(`${API}/lawyers`);
+        const realLawyers = res.data.map(l => ({
+          ...l,
+          name: l.full_name || l.name,
+          // Normalize fields if needed
+          experience: l.experience_years || l.experience,
+          // Real lawyers from DB have is_verified, ensure it's present
+        }));
+
+        // Merge: Dummy + Real
+        // We use a Map to prevent duplicates based on ID (though IDs should be different: dummy_... vs UUID)
+        const allLawyers = [...realLawyers, ...dummyLawyers.map(l => ({ ...l, is_verified: l.verified }))];
+
+        // Sort: Verified lawyers first
+        allLawyers.sort((a, b) => {
+          if (a.is_verified === b.is_verified) return 0;
+          return a.is_verified ? -1 : 1;
+        });
+
+        setLawyers(allLawyers);
+      } catch (error) {
+        console.error("Failed to fetch lawyers:", error);
+        // Fallback is already set in initial state, but ensure it's consistent
+        setLawyers(dummyLawyers.map(l => ({ ...l, is_verified: l.verified })));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLawyers();
+  }, []);
 
   // Filter states
   const [filters, setFilters] = useState({
@@ -61,15 +101,16 @@ const BrowseLawyers = () => {
 
   // Filter and search lawyers
   const filteredLawyers = useMemo(() => {
-    return dummyLawyers.filter(lawyer => {
+    return lawyers.filter(lawyer => {
       // Search query
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
           lawyer.name.toLowerCase().includes(query) ||
-          lawyer.specialization.toLowerCase().includes(query) ||
-          lawyer.location.toLowerCase().includes(query) ||
-          lawyer.city.toLowerCase().includes(query);
+          lawyer.name.toLowerCase().includes(query) ||
+          lawyer.specialization?.toLowerCase().includes(query) ||
+          lawyer.city?.toLowerCase().includes(query) ||
+          lawyer.state?.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
 
@@ -84,17 +125,18 @@ const BrowseLawyers = () => {
       }
 
       // Experience filter
-      if (filters.experienceMin && lawyer.experience < parseInt(filters.experienceMin)) {
+      const exp = parseInt(lawyer.experience_years || lawyer.experience || 0);
+      if (filters.experienceMin && exp < parseInt(filters.experienceMin)) {
         return false;
       }
-      if (filters.experienceMax && lawyer.experience > parseInt(filters.experienceMax)) {
+      if (filters.experienceMax && exp > parseInt(filters.experienceMax)) {
         return false;
       }
 
 
 
       // Verified filter
-      if (filters.verified && !lawyer.verified) {
+      if (filters.verified && !lawyer.is_verified) {
         return false;
       }
 
@@ -286,19 +328,15 @@ const BrowseLawyers = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="relative">
                     <img
-                      src={lawyer.image}
+                      src={(lawyer.photo && lawyer.photo.length > 5) ? lawyer.photo : (lawyer.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(lawyer.name)}&background=0D8ABC&color=fff`)}
                       alt={lawyer.name}
                       className="w-16 h-16 rounded-full object-cover"
                     />
-                    {lawyer.verified ? (
+                    {lawyer.is_verified ? (
                       <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                         <CheckCircle className="w-3 h-3 text-white" />
                       </div>
-                    ) : lawyer.id.startsWith('dummy') && (
-                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 bg-gray-500 rounded-full flex items-center justify-center border border-white">
-                        <span className="text-[10px] text-white font-bold">DUMMY</span>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 
@@ -308,11 +346,11 @@ const BrowseLawyers = () => {
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center text-sm text-gray-600">
                     <Briefcase className="w-4 h-4 mr-2" />
-                    <span>{lawyer.experience}yrs</span>
+                    <span>{lawyer.experience_years || lawyer.experience || 0} years exp</span>
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <MapPin className="w-4 h-4 mr-2" />
-                    <span>{lawyer.location}</span>
+                    <span>{lawyer.city}, {lawyer.state}</span>
                   </div>
                 </div>
 

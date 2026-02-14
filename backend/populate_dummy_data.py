@@ -48,6 +48,7 @@ DEMO_ACCOUNTS = {
         "experience_years": 10,
         "city": "Delhi",
         "state": "Delhi",
+        "office_address": "Chamber 405, Delhi High Court, Sher Shah Road, New Delhi, 110003",
         "is_approved": True
     },
     "law_firm": {
@@ -227,8 +228,56 @@ async def create_dummy_data_for_dashboards():
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
     })
+
+    # Dummy Bookings
+    bookings = [
+        # Video Consultation
+        {
+            "id": "dummy_booking_video",
+            "client_id": "dummy_user_1",
+            "lawyer_id": "dummy_lawyer_1",
+            "date": (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d"),
+            "time": "10:00 AM",
+            "description": "Initial Consultation (Video)",
+            "consultation_type": "video",
+            "meet_link": "https://meet.google.com/abc-defg-hij",
+            "location": "Google Meet",
+            "status": "confirmed",
+            "amount": 1000,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        # Audio Consultation
+        {
+            "id": "dummy_booking_audio",
+            "client_id": "dummy_user_1",
+            "lawyer_id": "dummy_lawyer_1",
+            "date": (datetime.now(timezone.utc) + timedelta(days=2)).strftime("%Y-%m-%d"),
+            "time": "02:00 PM",
+            "description": "Follow-up Call (Audio)",
+            "consultation_type": "audio",
+            "location": "831216968",
+            "status": "confirmed",
+            "amount": 500,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        # In-Person Consultation
+        {
+            "id": "dummy_booking_inperson",
+            "client_id": "dummy_user_1",
+            "lawyer_id": "dummy_lawyer_1",
+            "date": (datetime.now(timezone.utc) + timedelta(days=3)).strftime("%Y-%m-%d"),
+            "time": "11:00 AM",
+            "description": "Office Meeting (In-Person)",
+            "consultation_type": "in_person",
+            "location": "Chamber 405, Delhi High Court, Sher Shah Road, New Delhi, 110003",
+            "status": "confirmed",
+            "amount": 2000,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+    ]
     
-    # More dummy data can be added here if needed for complexity
+    await db.bookings.insert_many(bookings)
+    print("   ✅ Created dummy bookings (Video, Audio, In-Person)")
     print("   ✅ Created dummy cases")
 
 

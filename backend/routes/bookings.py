@@ -99,13 +99,30 @@ async def create_booking(booking_data: BookingCreate, current_user: dict = Depen
             else:
                 price = 1500.0
 
-    # Generate Google Meet Link (Mock)
-    meet_link = f"https://meet.google.com/{uuid.uuid4().hex[:3]}-{uuid.uuid4().hex[:4]}-{uuid.uuid4().hex[:3]}"
+    # Determine Location based on Consultation Type
+    location = ""
+    meet_link = ""
     
+    if booking_data.consultation_type == 'video':
+        meet_link = f"https://meet.google.com/{uuid.uuid4().hex[:3]}-{uuid.uuid4().hex[:4]}-{uuid.uuid4().hex[:3]}"
+        location = "Google Meet"
+    elif booking_data.consultation_type == 'audio':
+        location = "831216968" # Dummy number as requested
+    elif booking_data.consultation_type == 'in_person':
+        # Fetch Lawyer's Address
+        lawyer = await db.users.find_one({"id": booking_data.lawyer_id})
+        if lawyer and 'office_address' in lawyer:
+            location = lawyer['office_address']
+        elif lawyer and 'city' in lawyer:
+            location = f"{lawyer['city']}, {lawyer.get('state', '')}"
+        else:
+            location = "Lawyer's Office (Address pending)"
+            
     booking_dict = booking_data.model_dump()
     booking_dict['client_id'] = current_user['id']
     booking_dict['price'] = price
     booking_dict['meet_link'] = meet_link
+    booking_dict['location'] = location
     booking_dict['is_free_trial'] = is_free_trial
     
     booking_obj = Booking(**booking_dict)

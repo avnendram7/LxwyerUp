@@ -67,6 +67,10 @@ export default function LawyerDashboard() {
   // Deletion State
   const [docToDelete, setDocToDelete] = useState(null);
 
+  // Session View Modal
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [showSessionModal, setShowSessionModal] = useState(false);
+
   // Fallbacks to prevent crashes while features are being built
   const [documents, setDocuments] = useState([]);
   const billingHistory = [];
@@ -728,7 +732,13 @@ export default function LawyerDashboard() {
                     const todayStr = format(new Date(), 'yyyy-MM-dd');
                     const todayItems = [
                       ...(dashboardData.upcoming_hearings || []).map(h => ({ ...h, sessionType: 'HEARING' })),
-                      ...(events || []).map(e => ({ ...e, date: (e.date || e.start_time?.split('T')[0]), sessionType: 'EVENT', case: e.title, court: e.description || e.type }))
+                      ...(events || []).map(e => ({ ...e, date: (e.date || e.start_time?.split('T')[0]), sessionType: 'EVENT', case: e.title, court: e.description || e.type })),
+                      ...(bookings || []).filter(b => b.status === 'confirmed').map(b => ({
+                        ...b,
+                        sessionType: 'CONSULTATION',
+                        case: b.description || 'Legal Consultation',
+                        court: b.consultation_type === 'video' ? 'Video Call' : (b.consultation_type === 'audio' ? 'Audio Call' : 'In-Person')
+                      }))
                     ].filter(item => item.date === todayStr)
                       .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
@@ -756,7 +766,13 @@ export default function LawyerDashboard() {
                                 <p className="text-xs text-gray-500">{session.court}</p>
                               </div>
                               {idx === 0 && (
-                                <Button className="bg-[#0F2944] hover:bg-[#0F2944]/90 text-white rounded-lg px-4 py-2 text-sm shadow-lg">
+                                <Button
+                                  onClick={() => {
+                                    setSelectedSession(session);
+                                    setShowSessionModal(true);
+                                  }}
+                                  className="bg-[#0F2944] hover:bg-[#0F2944]/90 text-white rounded-lg px-4 py-2 text-sm shadow-lg"
+                                >
                                   View
                                 </Button>
                               )}
@@ -1089,11 +1105,18 @@ export default function LawyerDashboard() {
 
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[500px]">
                   {(() => {
-                    const hearingEvents = (dashboardData.upcoming_hearings || []).map(h => ({ ...h, type: 'hearing' }));
-                    const bookingEvents = bookings.map(b => ({ ...b, type: 'booking' }));
+                    const hearingEvents = (dashboardData.upcoming_hearings || []).map(h => ({ ...h, type: 'hearing', sessionType: 'HEARING' }));
+                    const bookingEvents = bookings.map(b => ({
+                      ...b,
+                      type: 'booking',
+                      sessionType: 'CONSULTATION',
+                      case: b.description || 'Legal Consultation',
+                      court: b.consultation_type === 'video' ? 'Video Call' : (b.consultation_type === 'audio' ? 'Audio Call' : 'In-Person')
+                    }));
                     const customEvents = events.map(e => ({
                       ...e,
                       type: 'event',
+                      sessionType: 'EVENT',
                       date: e.start_time.split('T')[0],
                       time: new Date(e.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     }));
@@ -1152,18 +1175,19 @@ export default function LawyerDashboard() {
                           }
                         </p>
                         {
-                          event.type === 'booking' && event.meet_link && (
-                            <a
-                              href={event.meet_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block w-full"
+                          <div className="mt-2 text-right">
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSession(event);
+                                setShowSessionModal(true);
+                              }}
+                              size="sm"
+                              className="bg-white border border-[#0F2944] text-[#0F2944] hover:bg-gray-50 h-8 text-xs shadow-sm"
                             >
-                              <Button size="sm" className="w-full bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 h-8 text-xs shadow-sm">
-                                <Video className="w-3 h-3 mr-1" /> Join Google Meet
-                              </Button>
-                            </a>
-                          )
+                              View Details
+                            </Button>
+                          </div>
                         }
                       </div>
                     ));
@@ -1984,6 +2008,95 @@ export default function LawyerDashboard() {
             </div>
           )
         }
+
+        {/* Session Details Modal */}
+        {showSessionModal && selectedSession && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">{selectedSession.sessionType}</h3>
+                    <p className="text-sm text-gray-500">{format(parseISO(selectedSession.date), 'MMMM d, yyyy')} • {selectedSession.time}</p>
+                  </div>
+                  <button onClick={() => setShowSessionModal(false)} className="text-gray-400 hover:text-gray-600">
+                    <span className="sr-only">Close</span>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h4 className="font-semibold text-gray-900 mb-1">{selectedSession.case}</h4>
+                    <p className="text-sm text-gray-600">{selectedSession.description || 'No description provided'}</p>
+                  </div>
+
+                  {selectedSession.sessionType === 'CONSULTATION' && (
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3 text-gray-700">
+                        <User className="w-5 h-5 text-blue-600" />
+                        <span>Client: {selectedSession.client_name || 'Client Name'}</span>
+                      </div>
+
+                      {selectedSession.consultation_type === 'video' && (
+                        <div className="pt-2">
+                          <a
+                            href={selectedSession.meet_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center space-x-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-colors font-medium"
+                          >
+                            <Video className="w-5 h-5" />
+                            <span>Join Google Meet</span>
+                          </a>
+                        </div>
+                      )}
+
+                      {selectedSession.consultation_type === 'audio' && (
+                        <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <Phone className="w-5 h-5 text-green-600" />
+                            <span className="font-medium text-green-900">Audio Call Number</span>
+                          </div>
+                          <p className="text-2xl font-bold text-green-700 tracking-wider font-mono select-all">
+                            {selectedSession.location || '831216968'}
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedSession.consultation_type === 'in_person' && (
+                        <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <MapPin className="w-5 h-5 text-purple-600" />
+                            <span className="font-medium text-purple-900">Meeting Location</span>
+                          </div>
+                          <p className="text-purple-800 font-medium">
+                            {selectedSession.location || 'Office Address Pending'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedSession.sessionType !== 'CONSULTATION' && (
+                    <p className="text-gray-600">
+                      {selectedSession.court || selectedSession.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <Button variant="outline" onClick={() => setShowSessionModal(false)}>Close</Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
       </div >
     </div >
   );

@@ -7,6 +7,10 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { dummyLawyers } from '../data/lawyersData';
+import axios from 'axios';
+import { useState, useEffect } from 'react';
+
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const SimpleNavbar = ({ navigate }) => {
   return (
@@ -41,10 +45,60 @@ const SimpleNavbar = ({ navigate }) => {
 
 const LawyerProfile = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
 
-  // Find the lawyer by ID
-  const lawyer = dummyLawyers.find(l => l.id === id);
+  const { id } = useParams();
+  const [lawyer, setLawyer] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLawyer = async () => {
+      console.log("Fetching lawyer for ID:", id);
+
+      // 1. Check dummy lawyers first
+      const dummy = dummyLawyers.find(l => l.id === id);
+      if (dummy) {
+        setLawyer({ ...dummy, is_verified: dummy.verified });
+        setLoading(false);
+        return;
+      }
+
+      // 2. If not found, fetch from API
+      try {
+        const res = await axios.get(`${API}/lawyers`);
+        console.log("API Response:", res.data);
+        const foundLawyer = res.data.find(l => l.id === id);
+        console.log("Found Lawyer:", foundLawyer);
+
+        if (foundLawyer) {
+          setLawyer({
+            ...foundLawyer,
+            name: foundLawyer.full_name || foundLawyer.name,
+            experience: foundLawyer.experience_years || foundLawyer.experience,
+            feeMin: foundLawyer.fee_range?.split('-')[0]?.replace(/[^\d]/g, '') || 'N/A',
+            feeMax: foundLawyer.fee_range?.split('-')[1]?.replace(/[^\d]/g, '') || 'N/A',
+            location: `${foundLawyer.city}, ${foundLawyer.state}`,
+            image: (foundLawyer.photo && foundLawyer.photo.length > 5) ? foundLawyer.photo : `https://ui-avatars.com/api/?name=${encodeURIComponent(foundLawyer.full_name || foundLawyer.name)}&background=0D8ABC&color=fff`,
+            availability: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], // Default
+            consultationModes: ['In-Person', 'Video Call', 'Audio Call'] // Default
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch lawyer:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLawyer();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F2944]"></div>
+      </div>
+    );
+  }
 
   if (!lawyer) {
     return (
@@ -89,7 +143,7 @@ const LawyerProfile = () => {
                   alt={lawyer.name}
                   className="w-32 h-32 rounded-2xl object-cover"
                 />
-                {lawyer.verified && (
+                {lawyer.is_verified && (
                   <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
@@ -124,7 +178,7 @@ const LawyerProfile = () => {
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mt-4">
-                  {lawyer.verified && (
+                  {lawyer.is_verified && (
                     <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" /> Verified
                     </span>

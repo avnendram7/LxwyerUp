@@ -5,6 +5,7 @@ import uuid
 
 
 class LawyerApplicationCreate(BaseModel):
+    office_address: Optional[str] = None
     name: str
     email: EmailStr
     phone: str
@@ -33,6 +34,7 @@ class LawyerApplication(BaseModel):
     email: EmailStr
     phone: str
     password_hash: str
+    office_address: Optional[str] = None
     photo: Optional[str] = None
     bar_council_number: str
     specialization: str
