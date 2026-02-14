@@ -1,0 +1,38 @@
+# General
+.DS_Store
+.idea/
+.vscode/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Environment Variables
+.env
+.env.*
+*.env
+*.env.*
+
+# Local Data and Uploads
+start_db/data/
+backend/uploads/
+test_results_detailed.json
+
+# Misc
+dump.rdb
+*.log
